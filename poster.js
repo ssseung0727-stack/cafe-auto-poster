@@ -17,6 +17,19 @@ const MENU_MAP = {
   '가전제품': '3', '스포츠용품': '7', '반려동물': '4', '기타': '8'
 };
 
+const BTN_TEXTS = {
+  '뷰티': ['직접 써보고 괜찮아서 공유해요', '성분이랑 가격 한번 보세요', '다른 분들 후기도 확인해 보세요'],
+  '패션': ['입어본 사람 후기 모아둔 곳이에요', '사이즈 가이드랑 재고 확인하기', '비슷한 스타일도 같이 보세요'],
+  '건강식품': ['성분 직접 확인해 보세요', '복용 방법이랑 주의사항 꼭 보세요', '다른 분들 후기도 많이 있어요'],
+  '가전제품': ['스펙이랑 가격 비교해 보세요', '설치 서비스 포함인지 확인하기', '실제 쓰는 분들 후기 보러 가기'],
+  '유아용품': ['안전 인증 정보 확인해 보세요', '월령별로 맞는지 꼭 보세요', '다른 부모님들 후기 많이 있어요'],
+  '식품': ['원산지랑 성분 확인해 보세요', '묶음 구성이 더 저렴해요', '정기배송 신청하면 할인돼요'],
+  '생활용품': ['저도 실제로 쓰고 있는 거예요', '용량이랑 색상 선택 여기서 해요', '묶음 구매가 더 경제적이에요'],
+  '스포츠용품': ['사이즈랑 무게 스펙 확인하기', '초보자용 구성이랑 비교해 보세요', '실제 운동하는 분들 후기 있어요'],
+  '반려동물': ['성분이랑 급여량 확인해 보세요', '우리 아이 사이즈 맞는지 보세요', '다른 견주님들 후기 있어요'],
+  '기타': ['직접 써보고 괜찮아서 공유해요', '가격이랑 재고 한번 확인해 보세요', '다른 분들 후기도 보세요']
+};
+
 const SEARCH_KEYWORDS = [
   { keyword: '스킨케어 크림', category: '뷰티' },
   { keyword: '마스크팩', category: '뷰티' },
@@ -57,28 +70,7 @@ async function getDeeplink(productUrl) {
   }
 }
 
-async function generateReview(productName, category, productUrl, price) {
-  const prompt = `당신은 네이버 카페 전문 리뷰어입니다.
-
-상품명: ${productName}
-카테고리: ${category}
-가격: ${price}원
-구매링크: ${productUrl}
-
-아래 조건으로 카페 리뷰를 작성해주세요:
-- 800자 내외
-- 친근한 말투
-- 제목 1개 (30자 이내)
-- 줄바꿈은 <br> 사용
-- 굵은글씨는 <b>태그 사용
-- 장단점 포함
-- 마지막에 반드시: 이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.
-
-출력형식:
-제목: (제목)
-내용:
-(내용)`;
-
+async function callGemini(prompt) {
   for (let i = 0; i < GEMINI_KEYS.length; i++) {
     const idx = (geminiKeyIdx + i) % GEMINI_KEYS.length;
     try {
@@ -87,13 +79,51 @@ async function generateReview(productName, category, productUrl, price) {
         { contents: [{ parts: [{ text: prompt }] }] }
       );
       geminiKeyIdx = idx;
-      return res.data.candidates[0].content.parts[0].text;
+      return res.data.candidates[0].content.parts[0].text.trim();
     } catch (e) {
       if (e.response?.status === 429) continue;
       throw e;
     }
   }
   throw new Error('모든 Gemini 키 실패');
+}
+
+async function generateTitle(productName, category) {
+  return await callGemini(`상품명: ${productName}, 카테고리: ${category}
+네이버 카페 리뷰 제목 1개만 작성. 30자 이내. SEO 최적화. 제목만 출력.`);
+}
+
+async function generateReview(productName, category, productUrl, price, btnTexts) {
+  const btn1 = `<br><br>─────────────────────────<br><a href="${productUrl}"><b>${btnTexts[0]}</b></a><br>─────────────────────────<br><br>`;
+  const btn2 = `<br><br>─────────────────────────<br><a href="${productUrl}"><b>${btnTexts[1]}</b></a><br>─────────────────────────<br><br>`;
+  const btn3 = `<br><br>─────────────────────────<br><a href="${productUrl}"><b>${btnTexts[2]}</b></a><br>─────────────────────────`;
+
+  const prompt = `당신은 네이버 카페 전문 리뷰어입니다.
+
+상품명: ${productName}
+카테고리: ${category}
+가격: ${price}원
+
+아래 조건으로 카페 리뷰 본문만 작성해주세요:
+- 1000자 내외
+- 친근한 말투
+- 제목 없이 본문만 시작
+- 줄바꿈은 <br> 사용
+- 굵은글씨는 <b>태그 사용
+- 본문을 3등분해서 각 파트 끝에 아래 버튼 삽입:
+  파트1 끝: ${btn1}
+  파트2 끝: ${btn2}
+  파트3 끝(본문 마지막): ${btn3}
+- 본문 마지막에 해시태그 25개 한줄로
+
+본문만 출력. 제목/라벨 없이 바로 시작.`;
+
+  return await callGemini(prompt);
+}
+
+function buildFinalContent(content, productUrl) {
+  const disclaimer = `<font color="red"><b>이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.</b></font><br><br>`;
+  return disclaimer + content;
 }
 
 async function postToCafe(menuId, title, content) {
@@ -106,53 +136,43 @@ async function postToCafe(menuId, title, content) {
   return res.data.result?.articleUrl;
 }
 
-function extractTitle(text) {
-  const match = text.match(/제목:\s*(.+)/);
-  return match ? match[1].trim() : '상품 리뷰';
-}
-
-function extractContent(text) {
-  const match = text.match(/내용:\s*([\s\S]+)/);
-  return match ? match[1].trim() : text;
-}
-
 async function main() {
   const count = parseInt(process.env.POST_COUNT || '5');
   const keywords = SEARCH_KEYWORDS.slice(0, count);
-  
+
   console.log(`🚀 자동 포스팅 시작! ${count}개 게시 예정`);
-  
+
   let success = 0;
-  
+
   for (let i = 0; i < keywords.length; i++) {
     const { keyword, category } = keywords[i];
     console.log(`\n[${i+1}/${count}] ${keyword} 처리 중...`);
-    
+
     try {
       const products = await searchCoupang(keyword);
       if (!products.length) { console.log('상품 없음'); continue; }
-      
+
       const product = products[0];
       console.log(`상품: ${product.productName}`);
-      
+
       const deeplink = await getDeeplink(product.productUrl);
-      const review = await generateReview(product.productName, category, deeplink, product.productPrice);
-      
-      const title = extractTitle(review);
-      const content = extractContent(review);
+      const btnTexts = BTN_TEXTS[category] || BTN_TEXTS['기타'];
+      const title = await generateTitle(product.productName, category);
+      const reviewContent = await generateReview(product.productName, category, deeplink, product.productPrice, btnTexts);
+      const finalContent = buildFinalContent(reviewContent, deeplink);
       const menuId = MENU_MAP[category] || '8';
-      
-      const url = await postToCafe(menuId, title, content);
+
+      const url = await postToCafe(menuId, title, finalContent);
       console.log(`✅ 게시 완료! ${url}`);
       success++;
-      
+
       await new Promise(r => setTimeout(r, 10000));
-      
+
     } catch (e) {
       console.log(`❌ 오류: ${e.message}`);
     }
   }
-  
+
   console.log(`\n🎉 완료! ${success}/${count}개 성공`);
 }
 
