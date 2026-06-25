@@ -1,0 +1,33 @@
+name: 카페 자동 포스팅
+
+on:
+  schedule:
+    - cron: '0 1 * * *'  # 오전 10시 (한국시간)
+    - cron: '0 6 * * *'  # 오후 3시 (한국시간)
+  workflow_dispatch:      # 수동 실행도 가능
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Node.js 설치
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+          
+      - name: 패키지 설치
+        run: npm install
+        
+      - name: 자동 포스팅 실행
+        env:
+          COUPANG_ACCESS_KEY: ${{ secrets.COUPANG_ACCESS_KEY }}
+          COUPANG_SECRET_KEY: ${{ secrets.COUPANG_SECRET_KEY }}
+          GEMINI_API_KEY_1: ${{ secrets.GEMINI_API_KEY_1 }}
+          GEMINI_API_KEY_2: ${{ secrets.GEMINI_API_KEY_2 }}
+          GEMINI_API_KEY_3: ${{ secrets.GEMINI_API_KEY_3 }}
+          GEMINI_API_KEY_4: ${{ secrets.GEMINI_API_KEY_4 }}
+          CAFE_PROXY_URL: ${{ secrets.CAFE_PROXY_URL }}
+          POST_COUNT: '5'
+        run: node poster.js
