@@ -32,17 +32,16 @@ const BTN_TEXTS = {
   '기타': ['직접 써보고 괜찮아서 공유해요', '가격이랑 재고 한번 확인해 보세요', '다른 분들 후기도 보세요']
 };
 
-const SEARCH_KEYWORDS = [
-  { keyword: '스킨케어 크림', category: '뷰티' },
-  { keyword: '마스크팩', category: '뷰티' },
-  { keyword: '비타민', category: '건강식품' },
-  { keyword: '유산균', category: '건강식품' },
-  { keyword: '주방용품', category: '생활용품' },
-  { keyword: '청소용품', category: '생활용품' },
-  { keyword: '간편식', category: '식품' },
-  { keyword: '운동기구', category: '스포츠용품' },
-  { keyword: '아기용품', category: '유아용품' },
-  { keyword: '반려동물 간식', category: '반려동물' }
+const GEMINI_KEYS = [
+  'AQ.Ab8RN6IzmdxR46hStTi2qM0fhF2KHh_xGJByCsr3rZ-9Ge7ylQ',
+  'AQ.Ab8RN6KCco_VkFnIGUKEUkUK3eRvku-bVDhpfEI2Ng5GbqYDRg',
+  'AQ.Ab8RN6KlgoZJreDDvvmjw1EdaukWp4nJzNQeIfoIqHPpYcDsZw',
+  'AQ.Ab8RN6J55o2RBGLO-FPjDudhn9ZgvJ2FVCFpE43PeSEkUyXNjg',
+  'AIzaSyBVNADjSx70B0dL8SvUXsxsPhcHjax20v0',
+  'AQ.Ab8RN6KeasUyIC9tfkHwyM8Pz7R71AZieE9_1SlnYJ4LYYEuNw',
+  'AIzaSyD2h9JP9hYLKcMATpTz87JUyDNIv2zmNtc',
+  'AIzaSyBbr_fyhE9HcAnd1oB_z41U6IB0W__dFC4',
+  'AIzaSyDYpWxkww2zrlFg71uPfA7iucabyXFLjSg'
 ];
 
 let geminiKeyIdx = 0;
