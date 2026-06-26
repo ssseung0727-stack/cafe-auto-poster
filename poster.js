@@ -115,18 +115,26 @@ async function getDeeplink(productUrl) {
 }
 
 async function callGemini(prompt) {
+  const startIdx = geminiKeyIdx;
   for (let i = 0; i < GEMINI_KEYS.length; i++) {
-    const idx = (geminiKeyIdx + i) % GEMINI_KEYS.length;
+    const idx = (startIdx + i) % GEMINI_KEYS.length;
+    const key = GEMINI_KEYS[idx];
     try {
+      console.log(`키 ${idx+1} 시도 중...`);
       const res = await axios.post(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${GEMINI_KEYS[idx]}`,
-        { contents: [{ parts: [{ text: prompt }] }] }
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${key}`,
+        { contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.92 } }
       );
-      geminiKeyIdx = idx;
-      return res.data.candidates[0].content.parts[0].text.trim();
+      const text = res.data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!text) throw new Error('응답 비어있음');
+      geminiKeyIdx = (idx + 1) % GEMINI_KEYS.length;
+      console.log(`✅ 키 ${idx+1} 성공!`);
+      return text.trim();
     } catch (e) {
-      if (e.response?.status === 429 || e.response?.status === 503 || e.response?.status === 500) {
-        console.log(`키 ${idx+1} 한도초과, 다음 키로 전환...`);
+      const status = e.response?.status;
+      console.log(`키 ${idx+1} 오류(${status})`);
+      if (status === 429 || status === 503 || status === 500) {
+        await new Promise(r => setTimeout(r, 2000));
         continue;
       }
       throw e;
