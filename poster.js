@@ -5,10 +5,29 @@ const PROXY_URL = 'https://coupang-proxy-pearl.vercel.app/api/coupang';
 const COUPANG_ACCESS_KEY = '38f69b89-bf56-477e-82d0-ad1d934fc2f3';
 const COUPANG_SECRET_KEY = '3f192ef7a2bbe383b3909690793e84967de88e16';
 const GEMINI_KEYS = [
+  'AIzaSyDS_fDJ-22nn59OR0nekqm43on9FfGNtRw',
+  'AIzaSyDKvJ_oX4CHjVMI4Nw6Z_sX-YOIfzLw368',
+  'AIzaSyBsJmJFt6JYt77NwdB0E3cPaXCKGbRQIjQ',
+  'AIzaSyBN1L4gD1Bu6vxoltmvc-1XX-yV2ZSl9GM',
+  'AIzaSyBTuTYrvz9m4mrf6MqsDyhwL3jdkaxd_tA',
+  'AIzaSyCGHvOi10yGxZC8giZxRcpZ73smLiUbmRs',
+  'AIzaSyCqX18ZtNksY0GB-zY3VqXAD5uYZnXiWbY',
+  'AIzaSyC5rS1Mu7g8o7rH_KdVaciJVMKKwwk8zOI',
+  'AIzaSyCewwdnVEEoz7hX4Wg_wlvCKFcS0rLFnNQ',
+  'AIzaSyB-R6kljD7ROZN9EmRoxCl_SEKq8LMsX58',
+  'AIzaSyCr4t0oeqHGv0UbChlIZCjw86OdTw6sAJU',
+  'AIzaSyBC35rmlGgMqUEXDGY0lYKQKZ-KNIkhAJM',
+  'AIzaSyBqhZJC8mBHjprBdiYd6cK6uxFFsuyvg80',
+  'AIzaSyAT1to7zvLHzuDZE2k7TjLV7z8zKBC6dQo',
   'AQ.Ab8RN6IzmdxR46hStTi2qM0fhF2KHh_xGJByCsr3rZ-9Ge7ylQ',
   'AQ.Ab8RN6KCco_VkFnIGUKEUkUK3eRvku-bVDhpfEI2Ng5GbqYDRg',
   'AQ.Ab8RN6KlgoZJreDDvvmjw1EdaukWp4nJzNQeIfoIqHPpYcDsZw',
-  'AQ.Ab8RN6J55o2RBGLO-FPjDudhn9ZgvJ2FVCFpE43PeSEkUyXNjg'
+  'AQ.Ab8RN6J55o2RBGLO-FPjDudhn9ZgvJ2FVCFpE43PeSEkUyXNjg',
+  'AIzaSyBVNADjSx70B0dL8SvUXsxsPhcHjax20v0',
+  'AQ.Ab8RN6KeasUyIC9tfkHwyM8Pz7R71AZieE9_1SlnYJ4LYYEuNw',
+  'AIzaSyD2h9JP9hYLKcMATpTz87JUyDNIv2zmNtc',
+  'AIzaSyBbr_fyhE9HcAnd1oB_z41U6IB0W__dFC4',
+  'AIzaSyDYpWxkww2zrlFg71uPfA7iucabyXFLjSg'
 ];
 
 const CLUB_ID = '31745334';
