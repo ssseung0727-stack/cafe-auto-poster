@@ -107,7 +107,10 @@ async function callGemini(prompt) {
       geminiKeyIdx = idx;
       return res.data.candidates[0].content.parts[0].text.trim();
     } catch (e) {
-      if (e.response?.status === 429) continue;
+      if (e.response?.status === 429 || e.response?.status === 503 || e.response?.status === 500) {
+        console.log(`키 ${idx+1} 한도초과, 다음 키로 전환...`);
+        continue;
+      }
       throw e;
     }
   }
