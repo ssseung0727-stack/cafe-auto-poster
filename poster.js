@@ -175,7 +175,9 @@ async function generateReview(productName, category, productUrl, price, btnTexts
 }
 
 async function postToCafe(menuId, title, content) {
-  const accessToken = await getAccessToken();
+  const tokens = JSON.parse(fs.readFileSync('tokens.json', 'utf8'));
+  const accessToken = tokens.access_token;
+  
   const subject = encodeURIComponent(encodeURIComponent(title));
   const body = encodeURIComponent(encodeURIComponent(content));
 
@@ -184,7 +186,7 @@ async function postToCafe(menuId, title, content) {
     'subject='+subject+'&content='+body+'&openyn=true',
     {
       headers: {
-        'Authorization': 'Bearer '+accessToken,
+        'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/x-www-form-urlencoded'
       }
     }
