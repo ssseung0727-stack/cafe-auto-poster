@@ -187,8 +187,7 @@ async function generateReview(productName, category, productUrl, price, btnTexts
   return await callGemini(`당신은 네이버 카페 전문 리뷰어입니다.\n상품명: ${productName}\n카테고리: ${category}\n가격: ${price}원\n\n아래 조건으로 카페 리뷰 본문만 작성:\n- 1000자 내외\n- 친근한 말투\n- 제목 없이 본문만 시작\n- 줄바꿈은 <br> 사용\n- 굵은글씨는 <b>태그 사용\n- 본문을 3등분해서 각 파트 끝에 버튼 삽입:\n  파트1 끝: ${btn1}\n  파트2 끝: ${btn2}\n  파트3 끝: ${btn3}\n- 본문 마지막에 해시태그 25개 한줄로\n\n본문만 출력. 제목/라벨 없이 바로 시작.`);
 }
 
-async function postToCafe(menuId, title, content) {
-  const accessToken = await getAccessToken();
+async function postToCafe(menuId, title, content, accessToken) {
   const subject = encodeURIComponent(encodeURIComponent(title));
   const body = encodeURIComponent(encodeURIComponent(content));
   const response = await axios.post(
@@ -205,6 +204,7 @@ async function postToCafe(menuId, title, content) {
 }
 
 async function main() {
+  const cachedToken = await getAccessToken();
   const count = parseInt(process.env.POST_COUNT || process.argv[2] || '5');
   const keywords = SEARCH_KEYWORDS.slice(0, count);
   console.log(`🚀 자동 포스팅 시작! ${count}개 게시 예정`);
@@ -224,7 +224,7 @@ async function main() {
       const disclaimer = `<b>※ 이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.</b><br><br>`;
       const finalContent = disclaimer + cleanContent(reviewContent);
       const menuId = MENU_MAP[category] || '8';
-      const url = await postToCafe(menuId, title, finalContent);
+      const url = await postToCafe(menuId, title, finalContent, cachedToken);
       console.log(`✅ 게시 완료! ${url}`);
       success++;
       await new Promise(r => setTimeout(r, 10000));
