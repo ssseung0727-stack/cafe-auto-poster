@@ -73,6 +73,9 @@ async function getAccessToken() {
   let accessToken = process.env.NAVER_ACCESS_TOKEN;
   const refreshToken = process.env.NAVER_REFRESH_TOKEN;
 
+  console.log('🔍 디버그: accessToken 존재?', !!accessToken, '길이:', accessToken?.length);
+  console.log('🔍 디버그: refreshToken 존재?', !!refreshToken, '길이:', refreshToken?.length);
+
   // 로컬 실행 시 tokens.json에서 읽기
   if (!accessToken && fs.existsSync('tokens.json')) {
     const tokens = JSON.parse(fs.readFileSync('tokens.json', 'utf8'));
