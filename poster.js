@@ -33,9 +33,16 @@ const GEMINI_KEYS = [
 const CLUB_ID = '31745334';
 
 const MENU_MAP = {
-  '뷰티': '6', '패션': '6', '생활용품': '3',
-  '식품': '2', '건강식품': '2', '유아용품': '5',
-  '가전제품': '3', '스포츠용품': '7', '반려동물': '4', '기타': '8'
+  '뷰티': '8',
+  '패션': '6',
+  '생활용품': '3',
+  '식품': '2',
+  '건강식품': '2',
+  '유아용품': '5',
+  '가전제품': '3',
+  '스포츠용품': '7',
+  '반려동물': '4',
+  '기타': '8'
 };
 
 const BTN_TEXTS = {
@@ -51,36 +58,34 @@ const BTN_TEXTS = {
   '기타': ['직접 써보고 괜찮아서 공유해요', '가격이랑 재고 한번 확인해 보세요', '다른 분들 후기도 보세요']
 };
 
-const GEMINI_KEYS = [
-  'AQ.Ab8RN6IzmdxR46hStTi2qM0fhF2KHh_xGJByCsr3rZ-9Ge7ylQ',
-  'AQ.Ab8RN6KCco_VkFnIGUKEUkUK3eRvku-bVDhpfEI2Ng5GbqYDRg',
-  'AQ.Ab8RN6KlgoZJreDDvvmjw1EdaukWp4nJzNQeIfoIqHPpYcDsZw',
-  'AQ.Ab8RN6J55o2RBGLO-FPjDudhn9ZgvJ2FVCFpE43PeSEkUyXNjg',
-  'AIzaSyBVNADjSx70B0dL8SvUXsxsPhcHjax20v0',
-  'AQ.Ab8RN6KeasUyIC9tfkHwyM8Pz7R71AZieE9_1SlnYJ4LYYEuNw',
-  'AIzaSyD2h9JP9hYLKcMATpTz87JUyDNIv2zmNtc',
-  'AIzaSyBbr_fyhE9HcAnd1oB_z41U6IB0W__dFC4',
-  'AIzaSyDYpWxkww2zrlFg71uPfA7iucabyXFLjSg'
+const SEARCH_KEYWORDS = [
+  { keyword: '스킨케어 크림', category: '뷰티' },
+  { keyword: '마스크팩', category: '뷰티' },
+  { keyword: '비타민', category: '건강식품' },
+  { keyword: '유산균', category: '건강식품' },
+  { keyword: '주방용품', category: '생활용품' },
+  { keyword: '청소용품', category: '생활용품' },
+  { keyword: '간편식', category: '식품' },
+  { keyword: '운동기구', category: '스포츠용품' },
+  { keyword: '아기용품', category: '유아용품' },
+  { keyword: '반려동물 간식', category: '반려동물' }
 ];
 
 let geminiKeyIdx = 0;
 
+// 토큰 자동 갱신 포함
 async function getAccessToken() {
   const tokens = JSON.parse(fs.readFileSync('tokens.json', 'utf8'));
-  if (Date.now() > tokens.expires_at) {
-    console.log('토큰 갱신 중...');
-    const response = await axios.post(
-      'https://nid.naver.com/oauth2.0/token',
-      null,
-      {
-        params: {
-          grant_type: 'refresh_token',
-          client_id: '9qR6cesxG_fHgEDfnRQO',
-          client_secret: 'qMiS0Q33pp',
-          refresh_token: tokens.refresh_token
-        }
+  if (Date.now() > tokens.expires_at - 60000) {
+    console.log('토큰 만료 → 자동 갱신 중...');
+    const response = await axios.post('https://nid.naver.com/oauth2.0/token', null, {
+      params: {
+        grant_type: 'refresh_token',
+        client_id: '9qR6cesxG_fHgEDfnRQO',
+        client_secret: 'qMiS0Q33pp',
+        refresh_token: tokens.refresh_token
       }
-    );
+    });
     tokens.access_token = response.data.access_token;
     tokens.expires_at = Date.now() + (3600 * 1000);
     fs.writeFileSync('tokens.json', JSON.stringify(tokens, null, 2), 'utf8');
@@ -90,28 +95,15 @@ async function getAccessToken() {
 }
 
 async function searchCoupang(keyword) {
-  const res = await axios.post(PROXY_URL, {
-    action: 'search',
-    accessKey: COUPANG_ACCESS_KEY,
-    secretKey: COUPANG_SECRET_KEY,
-    keyword,
-    limit: 3
-  });
+  const res = await axios.post(PROXY_URL, { action: 'search', accessKey: COUPANG_ACCESS_KEY, secretKey: COUPANG_SECRET_KEY, keyword, limit: 3 });
   return res.data.products || [];
 }
 
 async function getDeeplink(productUrl) {
   try {
-    const res = await axios.post(PROXY_URL, {
-      action: 'deeplink',
-      accessKey: COUPANG_ACCESS_KEY,
-      secretKey: COUPANG_SECRET_KEY,
-      productUrl
-    });
+    const res = await axios.post(PROXY_URL, { action: 'deeplink', accessKey: COUPANG_ACCESS_KEY, secretKey: COUPANG_SECRET_KEY, productUrl });
     return res.data.url || productUrl;
-  } catch (e) {
-    return productUrl;
-  }
+  } catch (e) { return productUrl; }
 }
 
 async function callGemini(prompt) {
@@ -120,7 +112,6 @@ async function callGemini(prompt) {
     const idx = (startIdx + i) % GEMINI_KEYS.length;
     const key = GEMINI_KEYS[idx];
     try {
-      console.log(`키 ${idx+1} 시도 중...`);
       const res = await axios.post(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${key}`,
         { contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.92 } }
@@ -128,11 +119,9 @@ async function callGemini(prompt) {
       const text = res.data.candidates?.[0]?.content?.parts?.[0]?.text;
       if (!text) throw new Error('응답 비어있음');
       geminiKeyIdx = (idx + 1) % GEMINI_KEYS.length;
-      console.log(`✅ 키 ${idx+1} 성공!`);
       return text.trim();
     } catch (e) {
       const status = e.response?.status;
-      console.log(`키 ${idx+1} 오류(${status})`);
       if (status === 429 || status === 503 || status === 500) {
         await new Promise(r => setTimeout(r, 2000));
         continue;
@@ -144,49 +133,36 @@ async function callGemini(prompt) {
 }
 
 async function generateTitle(productName, category) {
-  return await callGemini(`상품명: ${productName}, 카테고리: ${category}
-네이버 카페 리뷰 제목 1개만 작성. 30자 이내. SEO 최적화. 제목만 출력.`);
+  return await callGemini(`상품명: ${productName}, 카테고리: ${category}\n네이버 카페 리뷰 제목 1개만 작성. 30자 이내. SEO 최적화. 제목만 출력.`);
 }
 
 async function generateReview(productName, category, productUrl, price, btnTexts) {
-  const btn1 = `<br><br>─────────────────────────<br><a href="${productUrl}"><b>${btnTexts[0]}</b></a><br>─────────────────────────<br><br>`;
-  const btn2 = `<br><br>─────────────────────────<br><a href="${productUrl}"><b>${btnTexts[1]}</b></a><br>─────────────────────────<br><br>`;
-  const btn3 = `<br><br>─────────────────────────<br><a href="${productUrl}"><b>${btnTexts[2]}</b></a><br>─────────────────────────`;
+  const btn1 = `<br><br>─────────────────────────<br><b>👉 ${btnTexts[0]}</b><br>${productUrl}<br>─────────────────────────<br><br>`;
+const btn2 = `<br><br>─────────────────────────<br><b>👉 ${btnTexts[1]}</b><br>${productUrl}<br>─────────────────────────<br><br>`;
+const btn3 = `<br><br>─────────────────────────<br><b>👉 ${btnTexts[2]}</b><br>${productUrl}<br>─────────────────────────`;
+  return await callGemini(`당신은 네이버 카페 전문 리뷰어입니다.\n상품명: ${productName}\n카테고리: ${category}\n가격: ${price}원\n\n아래 조건으로 카페 리뷰 본문만 작성:\n- 1000자 내외\n- 친근한 말투\n- 제목 없이 본문만 시작\n- 줄바꿈은 <br> 사용\n- 굵은글씨는 <b>태그 사용\n- 본문을 3등분해서 각 파트 끝에 버튼 삽입:\n  파트1 끝: ${btn1}\n  파트2 끝: ${btn2}\n  파트3 끝: ${btn3}\n- 본문 마지막에 해시태그 25개 한줄로\n\n본문만 출력. 제목/라벨 없이 바로 시작.`);
+}
 
-  return await callGemini(`당신은 네이버 카페 전문 리뷰어입니다.
-
-상품명: ${productName}
-카테고리: ${category}
-가격: ${price}원
-
-아래 조건으로 카페 리뷰 본문만 작성:
-- 1000자 내외
-- 친근한 말투
-- 제목 없이 본문만 시작
-- 줄바꿈은 <br> 사용
-- 굵은글씨는 <b>태그 사용
-- 본문을 3등분해서 각 파트 끝에 버튼 삽입:
-  파트1 끝: ${btn1}
-  파트2 끝: ${btn2}
-  파트3 끝: ${btn3}
-- 본문 마지막에 해시태그 25개 한줄로
-
-본문만 출력. 제목/라벨 없이 바로 시작.`);
+function cleanContent(content) {
+  return content
+    .replace(/<font[^>]*>/gi, '')
+    .replace(/<\/font>/gi, '')
+    .replace(/<span[^>]*>/gi, '')
+    .replace(/<\/span>/gi, '')
+    .replace(/<a[^>]*>/gi, '')
+    .replace(/<\/a>/gi, '');
 }
 
 async function postToCafe(menuId, title, content) {
-  const tokens = JSON.parse(fs.readFileSync('tokens.json', 'utf8'));
-  const accessToken = tokens.access_token;
-  
+  const accessToken = await getAccessToken();
   const subject = encodeURIComponent(encodeURIComponent(title));
   const body = encodeURIComponent(encodeURIComponent(content));
-
   const response = await axios.post(
     `https://openapi.naver.com/v1/cafe/${CLUB_ID}/menu/${menuId}/articles`,
-    'subject='+subject+'&content='+body+'&openyn=true',
+    'subject=' + subject + '&content=' + body + '&openyn=true',
     {
       headers: {
-        'Authorization': `Bearer ${accessToken}`,
+        'Authorization': 'Bearer ' + accessToken,
         'Content-Type': 'application/x-www-form-urlencoded'
       }
     }
@@ -197,41 +173,36 @@ async function postToCafe(menuId, title, content) {
 async function main() {
   const count = parseInt(process.argv[2] || '5');
   const keywords = SEARCH_KEYWORDS.slice(0, count);
-
   console.log(`🚀 자동 포스팅 시작! ${count}개 게시 예정`);
-
   let success = 0;
-
   for (let i = 0; i < keywords.length; i++) {
     const { keyword, category } = keywords[i];
     console.log(`\n[${i+1}/${count}] ${keyword} 처리 중...`);
-
     try {
       const products = await searchCoupang(keyword);
       if (!products.length) { console.log('상품 없음'); continue; }
-
       const product = products[0];
       console.log(`상품: ${product.productName}`);
-
       const deeplink = await getDeeplink(product.productUrl);
       const btnTexts = BTN_TEXTS[category] || BTN_TEXTS['기타'];
       const title = await generateTitle(product.productName, category);
       const reviewContent = await generateReview(product.productName, category, deeplink, product.productPrice, btnTexts);
-      const disclaimer = `<font color="red"><b>이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.</b></font><br><br>`;
-      const finalContent = disclaimer + reviewContent;
+      const disclaimer = `<b>※ 이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.</b><br><br>`;
+      const finalContent = disclaimer + cleanContent(reviewContent);
       const menuId = MENU_MAP[category] || '8';
-
-      const url = await postToCafe(menuId, title, finalContent);
+      console.log('=== 전송 내용 미리보기 (앞 500자) ===');
+console.log(finalContent.substring(0, 500));
+console.log('=====================================');
+const url = await postToCafe(menuId, title, finalContent);
       console.log(`✅ 게시 완료! ${url}`);
       success++;
-
       await new Promise(r => setTimeout(r, 10000));
-
     } catch (e) {
       console.log(`❌ 오류: ${e.message}`);
+      console.log(`❌ 상세: ${JSON.stringify(e.response?.data)}`);
+      console.log(`❌ 상태코드: ${e.response?.status}`);
     }
   }
-
   console.log(`\n🎉 완료! ${success}/${count}개 성공`);
 }
 
