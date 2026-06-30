@@ -227,7 +227,7 @@ async function main() {
       const url = await postToCafe(menuId, title, finalContent, cachedToken);
       console.log(`✅ 게시 완료! ${url}`);
       success++;
-      await new Promise(r => setTimeout(r, 10000));
+      await new Promise(r => setTimeout(r, 30000));
     } catch (e) {
       console.log(`❌ 오류: ${e.message}`);
     }
